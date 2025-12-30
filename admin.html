@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品管理后台 - 金诃报单</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E63946', // 主色调：红色系（电商常用）
+            secondary: '#457B9D', // 辅助色：蓝色系
+            neutral: {
+              100: '#F8F9FA',
+              200: '#E9ECEF',
+              300: '#DEE2E6',
+              800: '#343A40',
+              900: '#212529'
+            }
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义样式 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors duration-300 focus:ring-2 focus:ring-primary/50 focus:outline-none;
+      }
+      .btn-secondary {
+        @apply bg-secondary text-white py-2 px-4 rounded-md hover:bg-secondary/90 transition-colors duration-300 focus:ring-2 focus:ring-secondary/50 focus:outline-none;
+      }
+      .btn-outline {
+        @apply border border-neutral-300 text-neutral-800 py-2 px-4 rounded-md hover:bg-neutral-100 transition-colors duration-300 focus:ring-2 focus:ring-primary/50 focus:outline-none;
+      }
+      .input-field {
+        @apply w-full py-2 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-neutral-100 text-neutral-800 min-h-screen flex flex-col">
+  <!-- 导航栏 -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <!-- Logo和标题 -->
+      <div class="flex items-center">
+        <i class="fa fa-cogs text-primary text-2xl mr-2"></i>
+        <h1 class="text-xl font-bold text-neutral-900">商品管理后台</h1>
+      </div>
+      
+      <!-- 操作按钮 -->
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="btn-secondary flex items-center">
+          <i class="fa fa-home mr-1"></i>
+          返回首页
+        </a>
+        <div class="flex space-x-2">
+          <button id="product-tab" class="btn-primary flex items-center">
+            <i class="fa fa-th mr-1"></i>
+            商品管理
+          </button>
+          <button id="carousel-tab" class="btn-outline flex items-center">
+            <i class="fa fa-picture-o mr-1"></i>
+            轮播管理
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 商品管理表格 -->
+    <section id="product-section" class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold flex items-center">
+          <i class="fa fa-th-list text-primary mr-2"></i>
+          商品列表
+        </h2>
+        <button id="add-product-btn" class="btn-primary flex items-center">
+          <i class="fa fa-plus mr-1"></i>
+          添加商品
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-neutral-100">
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">商品图片</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">商品名称</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">分类</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">售价</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">原价</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">销量</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody id="product-table-body" class="bg-white divide-y divide-neutral-200">
+            <!-- 商品数据将通过JS动态生成 -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- 轮播管理表格 -->
+    <section id="carousel-section" class="bg-white rounded-lg shadow-md p-6 hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold flex items-center">
+          <i class="fa fa-picture-o text-primary mr-2"></i>
+          轮播列表
+        </h2>
+        <button id="add-carousel-btn" class="btn-primary flex items-center">
+          <i class="fa fa-plus mr-1"></i>
+          添加轮播
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-neutral-100">
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">轮播图片</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">标题</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">描述</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">按钮文字</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody id="carousel-table-body" class="bg-white divide-y divide-neutral-200">
+            <!-- 轮播数据将通过JS动态生成 -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- 添加/编辑商品模态框 -->
+  <div id="product-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 id="modal-title" class="text-xl font-bold">添加商品</h3>
+        <button id="close-modal" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭模态框">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <form id="product-form" class="flex-grow overflow-y-auto p-6 space-y-4">
+        <input type="hidden" id="product-id" name="id">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="product-name" class="block text-sm font-medium mb-2">商品名称</label>
+            <input type="text" id="product-name" name="name" class="input-field" required>
+          </div>
+          
+          <div>
+            <label for="product-category" class="block text-sm font-medium mb-2">商品分类</label>
+            <input type="text" id="product-category" name="category" class="input-field" required>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="product-price" class="block text-sm font-medium mb-2">售价</label>
+            <input type="number" id="product-price" name="price" class="input-field" min="0" step="0.01" required>
+          </div>
+          
+          <div>
+            <label for="product-original-price" class="block text-sm font-medium mb-2">原价</label>
+            <input type="number" id="product-original-price" name="originalPrice" class="input-field" min="0" step="0.01" required>
+          </div>
+        </div>
+        
+        <div>
+          <label for="product-image" class="block text-sm font-medium mb-2">商品图片</label>
+          <div class="flex space-x-2">
+            <input type="text" id="product-image" name="image" class="input-field flex-grow" required placeholder="https://example.com/image.jpg 或 photo/filename.jpg">
+            <button type="button" id="open-image-library" class="btn-secondary whitespace-nowrap">
+              <i class="fa fa-picture-o mr-1"></i>
+              选择图片
+            </button>
+          </div>
+        </div>
+        
+        <div>
+          <label for="product-sales" class="block text-sm font-medium mb-2">销量</label>
+          <input type="number" id="product-sales" name="sales" class="input-field" min="0" required>
+        </div>
+        
+        <div class="flex items-center">
+          <input type="checkbox" id="product-is-active" name="isActive" class="h-4 w-4 text-primary focus:ring-primary/50 border-neutral-300 rounded">
+          <label for="product-is-active" class="ml-2 block text-sm font-medium">上架状态</label>
+        </div>
+      </form>
+      
+      <div class="px-6 py-4 border-t flex justify-end space-x-3">
+        <button id="cancel-btn" class="btn-outline">取消</button>
+        <button type="submit" form="product-form" class="btn-primary">保存商品</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加/编辑轮播模态框 -->
+  <div id="carousel-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 id="carousel-modal-title" class="text-xl font-bold">添加轮播</h3>
+        <button id="close-carousel-modal" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭模态框">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <form id="carousel-form" class="flex-grow overflow-y-auto p-6 space-y-4">
+        <input type="hidden" id="carousel-id" name="id">
+        
+        <div>
+          <label for="carousel-image" class="block text-sm font-medium mb-2">轮播图片URL</label>
+          <input type="text" id="carousel-image" name="image" class="input-field" required placeholder="https://example.com/image.jpg 或 photo/filename.jpg">
+        </div>
+        
+        <div>
+          <label for="carousel-title" class="block text-sm font-medium mb-2">标题</label>
+          <input type="text" id="carousel-title" name="title" class="input-field" required>
+        </div>
+        
+        <div>
+          <label for="carousel-description" class="block text-sm font-medium mb-2">描述</label>
+          <textarea id="carousel-description" name="description" class="input-field" rows="3" required></textarea>
+        </div>
+        
+        <div>
+          <label for="carousel-button-text" class="block text-sm font-medium mb-2">按钮文字</label>
+          <input type="text" id="carousel-button-text" name="buttonText" class="input-field" required>
+        </div>
+        
+        <div class="flex items-center">
+          <input type="checkbox" id="carousel-is-active" name="isActive" class="h-4 w-4 text-primary focus:ring-primary/50 border-neutral-300 rounded">
+          <label for="carousel-is-active" class="ml-2 block text-sm font-medium">启用状态</label>
+        </div>
+      </form>
+      
+      <div class="px-6 py-4 border-t flex justify-end space-x-3">
+        <button id="cancel-carousel-btn" class="btn-outline">取消</button>
+        <button type="submit" form="carousel-form" class="btn-primary">保存轮播</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 图片库模态框 -->
+  <div id="image-library-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 class="text-xl font-bold">图片库</h3>
+        <button id="close-image-library" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭图片库">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 图片上传区域 -->
+      <div class="px-6 py-4 border-b bg-neutral-50">
+        <h4 class="font-medium mb-3">上传图片</h4>
+        <form id="image-upload-form" class="flex space-x-2">
+          <input type="file" id="image-upload" name="image" accept="image/*" class="input-field flex-grow">
+          <button type="submit" class="btn-primary whitespace-nowrap">
+            <i class="fa fa-upload mr-1"></i>
+            上传
+          </button>
+        </form>
+      </div>
+      
+      <!-- 图片列表 -->
+      <div id="image-library-container" class="flex-grow overflow-y-auto p-6">
+        <h4 class="font-medium mb-3">图片列表</h4>
+        <div id="image-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <!-- 图片将通过JS动态生成 -->
+        </div>
+      </div>
+      
+      <!-- 选择图片按钮 -->
+      <div class="px-6 py-4 border-t flex justify-end">
+        <button id="select-image-btn" class="btn-primary" disabled>
+          <i class="fa fa-check mr-1"></i>
+          选择图片
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成功提示 -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+    <i class="fa fa-check-circle mr-2"></i>
+    <span id="toast-message">操作成功！</span>
+  </div>
+
+  <footer class="bg-neutral-800 text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="text-center text-neutral-400 text-sm">
+        © 2025 金诃报单 商品管理后台
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 从localStorage获取商品数据
+    let products = JSON.parse(localStorage.getItem('products')) || [];
+    
+    // 从localStorage获取轮播数据
+    let carouselItems = JSON.parse(localStorage.getItem('carouselItems')) || [];
+    
+    // DOM元素 - 商品管理
+    const productTableBody = document.getElementById('product-table-body');
+    const productModal = document.getElementById('product-modal');
+    const productForm = document.getElementById('product-form');
+    const modalTitle = document.getElementById('modal-title');
+    const productIdInput = document.getElementById('product-id');
+    const productNameInput = document.getElementById('product-name');
+    const productCategoryInput = document.getElementById('product-category');
+    const productPriceInput = document.getElementById('product-price');
+    const productOriginalPriceInput = document.getElementById('product-original-price');
+    const productImageInput = document.getElementById('product-image');
+    const productSalesInput = document.getElementById('product-sales');
+    const productIsActiveInput = document.getElementById('product-is-active');
+    const addProductBtn = document.getElementById('add-product-btn');
+    const closeModalBtn = document.getElementById('close-modal');
+    const cancelBtn = document.getElementById('cancel-btn');
+    
+    // DOM元素 - 轮播管理
+    const carouselTableBody = document.getElementById('carousel-table-body');
+    const carouselModal = document.getElementById('carousel-modal');
+    const carouselForm = document.getElementById('carousel-form');
+    const carouselModalTitle = document.getElementById('carousel-modal-title');
+    const carouselIdInput = document.getElementById('carousel-id');
+    const carouselImageInput = document.getElementById('carousel-image');
+    const carouselTitleInput = document.getElementById('carousel-title');
+    const carouselDescriptionInput = document.getElementById('carousel-description');
+    const carouselButtonTextInput = document.getElementById('carousel-button-text');
+    const carouselIsActiveInput = document.getElementById('carousel-is-active');
+    const addCarouselBtn = document.getElementById('add-carousel-btn');
+    const closeCarouselModalBtn = document.getElementById('close-carousel-modal');
+    const cancelCarouselBtn = document.getElementById('cancel-carousel-btn');
+    
+    // DOM元素 - 图片库管理
+    const imageLibraryModal = document.getElementById('image-library-modal');
+    const openImageLibraryBtn = document.getElementById('open-image-library');
+    const closeImageLibraryBtn = document.getElementById('close-image-library');
+    const imageUploadForm = document.getElementById('image-upload-form');
+    const imageUploadInput = document.getElementById('image-upload');
+    const imageGrid = document.getElementById('image-grid');
+    const selectImageBtn = document.getElementById('select-image-btn');
+    
+    // DOM元素 - 公共
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    // DOM元素 - 标签页
+    const productTab = document.getElementById('product-tab');
+    const carouselTab = document.getElementById('carousel-tab');
+    const productSection = document.getElementById('product-section');
+    const carouselSection = document.getElementById('carousel-section');
+    
+    // 图片库数据
+    let imageLibrary = JSON.parse(localStorage.getItem('imageLibrary')) || [];
+    
+    // 当前选中的图片
+    let selectedImage = null;
+    
+    // 渲染商品列表
+    function renderProductTable() {
+      productTableBody.innerHTML = '';
+      
+      if (products.length === 0) {
+        productTableBody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-neutral-500">
+              <i class="fa fa-shopping-bag text-4xl mb-2"></i>
+              <p>暂无商品数据</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      products.forEach(product => {
+        const productRow = document.createElement('tr');
+        productRow.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-neutral-900">${product.id}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <img src="${product.image}" alt="${product.name}" class="w-12 h-12 object-cover rounded">
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-neutral-900">${product.name}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-500">${product.category}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-primary">¥${product.price}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-500 line-through">¥${product.originalPrice}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-500">${product.sales}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${product.isActive ? '已上架' : '已下架'}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+            <button class="toggle-active-btn text-blue-600 hover:text-blue-800" data-id="${product.id}" title="切换上下架状态">
+              <i class="fa fa-${product.isActive ? 'eye-slash' : 'eye'}"></i>
+            </button>
+            <button class="edit-product-btn text-yellow-600 hover:text-yellow-800" data-id="${product.id}" title="编辑商品">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="delete-product-btn text-red-600 hover:text-red-800" data-id="${product.id}" title="删除商品">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        `;
+        productTableBody.appendChild(productRow);
+      });
+      
+      // 绑定事件
+      bindTableEvents();
+    }
+    
+    // 绑定表格操作事件
+    function bindTableEvents() {
+      // 切换上下架状态
+      document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+        btn.addEventListener('click', toggleProductActive);
+      });
+      
+      // 编辑商品
+      document.querySelectorAll('.edit-product-btn').forEach(btn => {
+        btn.addEventListener('click', editProduct);
+      });
+      
+      // 删除商品
+      document.querySelectorAll('.delete-product-btn').forEach(btn => {
+        btn.addEventListener('click', deleteProduct);
+      });
+    }
+    
+    // 切换商品上下架状态
+    function toggleProductActive(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const product = products.find(p => p.id === productId);
+      
+      if (product) {
+        product.isActive = !product.isActive;
+        saveProducts();
+        renderProductTable();
+        showToast(`${product.name}已${product.isActive ? '上架' : '下架'}`);
+      }
+    }
+    
+    // 编辑商品
+    function editProduct(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const product = products.find(p => p.id === productId);
+      
+      if (product) {
+        modalTitle.textContent = '编辑商品';
+        productIdInput.value = product.id;
+        productNameInput.value = product.name;
+        productCategoryInput.value = product.category;
+        productPriceInput.value = product.price;
+        productOriginalPriceInput.value = product.originalPrice;
+        productImageInput.value = product.image;
+        productSalesInput.value = product.sales;
+        productIsActiveInput.checked = product.isActive;
+        productModal.classList.remove('hidden');
+      }
+    }
+    
+    // 删除商品
+    function deleteProduct(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const product = products.find(p => p.id === productId);
+      
+      if (product && confirm(`确定要删除商品"${product.name}"吗？`)) {
+        products = products.filter(p => p.id !== productId);
+        saveProducts();
+        renderProductTable();
+        showToast(`${product.name}已删除`);
+      }
+    }
+    
+    // 添加新商品
+    function addProduct() {
+      modalTitle.textContent = '添加商品';
+      productForm.reset();
+      productIdInput.value = '';
+      productModal.classList.remove('hidden');
+    }
+    
+    // 保存商品数据到localStorage
+    function saveProducts() {
+      localStorage.setItem('products', JSON.stringify(products));
+    }
+    
+    // 保存轮播数据到localStorage
+    function saveCarouselItems() {
+      localStorage.setItem('carouselItems', JSON.stringify(carouselItems));
+    }
+    
+    // 保存图片库数据到localStorage
+    function saveImageLibrary() {
+      localStorage.setItem('imageLibrary', JSON.stringify(imageLibrary));
+    }
+    
+    // 显示提示框
+    function showToast(message) {
+      toastMessage.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+    
+    // 渲染图片库
+    function renderImageLibrary() {
+      imageGrid.innerHTML = '';
+      
+      // 如果图片库为空，显示提示
+      if (imageLibrary.length === 0) {
+        imageGrid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-neutral-500">
+            <i class="fa fa-picture-o text-4xl mb-2"></i>
+            <p>图片库为空，请上传图片</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // 渲染图片列表
+      imageLibrary.forEach(image => {
+        const imageItem = document.createElement('div');
+        imageItem.className = `relative border-2 rounded-md overflow-hidden cursor-pointer transition-all duration-300 ${selectedImage === image.path ? 'border-primary shadow-lg' : 'border-transparent hover:border-primary/50'}`;
+        imageItem.innerHTML = `
+          <img src="${image.path}" alt="${image.name}" class="w-full h-32 object-cover">
+          <div class="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <div class="flex space-x-2">
+              <button class="select-image-btn bg-primary text-white p-2 rounded-full hover:bg-primary/90 transition-colors" data-path="${image.path}" title="选择图片">
+                <i class="fa fa-check"></i>
+              </button>
+              <button class="delete-image-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors" data-id="${image.id}" title="删除图片">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        imageGrid.appendChild(imageItem);
+      });
+      
+      // 绑定图片操作事件
+      bindImageEvents();
+    }
+    
+    // 绑定图片操作事件
+    function bindImageEvents() {
+      // 选择图片
+      document.querySelectorAll('.select-image-btn').forEach(btn => {
+        btn.addEventListener('click', selectImage);
+      });
+      
+      // 删除图片
+      document.querySelectorAll('.delete-image-btn').forEach(btn => {
+        btn.addEventListener('click', deleteImage);
+      });
+    }
+    
+    // 选择图片
+    function selectImage(e) {
+      e.stopPropagation();
+      const imagePath = e.currentTarget.dataset.path;
+      selectedImage = imagePath;
+      
+      // 更新选择按钮状态
+      selectImageBtn.disabled = false;
+      
+      // 重新渲染图片库，高亮选中的图片
+      renderImageLibrary();
+    }
+    
+    // 删除图片
+    function deleteImage(e) {
+      e.stopPropagation();
+      const imageId = parseInt(e.currentTarget.dataset.id);
+      const imageIndex = imageLibrary.findIndex(image => image.id === imageId);
+      
+      if (imageIndex !== -1) {
+        const image = imageLibrary[imageIndex];
+        if (confirm(`确定要删除图片"${image.name}"吗？`)) {
+          // 从图片库中删除
+          imageLibrary.splice(imageIndex, 1);
+          saveImageLibrary();
+          renderImageLibrary();
+          showToast('图片已删除');
+          
+          // 如果删除的是当前选中的图片，重置选中状态
+          if (selectedImage === image.path) {
+            selectedImage = null;
+            selectImageBtn.disabled = true;
+          }
+        }
+      }
+    }
+    
+    // 初始化图片库
+    function initImageLibrary() {
+      // 初始化默认图片
+      if (imageLibrary.length === 0) {
+        // 从photo文件夹中添加默认图片
+        const defaultImages = [
+          'DM_20251230160415_001.jpg',
+          'DM_20251230160415_002.jpg',
+          'DM_20251230160415_003.jpg',
+          'DM_20251230160415_004.jpg',
+          'DM_20251230160415_005.jpg',
+          'DM_20251230160415_006.jpg',
+          'DM_20251230160415_007.jpg',
+          'DM_20251230160415_008.jpg',
+          'DM_20251230160415_009.jpg',
+          'DM_20251230160415_010.jpg',
+          'DM_20251230160415_011.jpg',
+          'DM_20251230160415_012.jpg',
+          'DM_20251230160415_013.jpg',
+          'DM_20251230160415_014.jpg',
+          'DM_20251230160415_015.jpg',
+          'DM_20251230160415_016.jpg',
+          'DM_20251230160415_017.jpg',
+          'DM_20251230160415_018.jpg',
+          'DM_20251230160415_019.jpg',
+          'DM_20251230160415_020.jpg',
+          'DM_20251230160546_001.jpg',
+          'DM_20251230160546_002.jpg',
+          'DM_20251230160546_003.jpg',
+          'DM_20251230160546_004.jpg',
+          'DM_20251230160546_005.jpg',
+          'DM_20251230160546_006.jpg',
+          'DM_20251230160546_007.jpg',
+          'DM_20251230160546_008.jpg',
+          'DM_20251230160546_009.jpg',
+          'DM_20251230160546_010.jpg',
+          'DM_20251230160546_011.jpg',
+          'DM_20251230160546_012.jpg'
+        ];
+        
+        defaultImages.forEach((imageName, index) => {
+          imageLibrary.push({
+            id: index + 1,
+            name: imageName,
+            path: `photo/${imageName}`,
+            uploadedAt: new Date().toISOString()
+          });
+        });
+        
+        saveImageLibrary();
+      }
+      
+      renderImageLibrary();
+    }
+    
+    // 标签页切换
+    function switchTab(tabName) {
+      // 隐藏所有内容
+      productSection.classList.add('hidden');
+      carouselSection.classList.add('hidden');
+      
+      // 重置所有标签样式
+      productTab.className = 'btn-outline flex items-center';
+      carouselTab.className = 'btn-outline flex items-center';
+      
+      // 显示选中的内容和样式
+      if (tabName === 'product') {
+        productSection.classList.remove('hidden');
+        productTab.className = 'btn-primary flex items-center';
+      } else if (tabName === 'carousel') {
+        carouselSection.classList.remove('hidden');
+        carouselTab.className = 'btn-primary flex items-center';
+      }
+    }
+    
+    // 渲染轮播列表
+    function renderCarouselTable() {
+      carouselTableBody.innerHTML = '';
+      
+      if (carouselItems.length === 0) {
+        carouselTableBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-neutral-500">
+              <i class="fa fa-picture-o text-4xl mb-2"></i>
+              <p>暂无轮播数据</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      carouselItems.forEach(item => {
+        const carouselRow = document.createElement('tr');
+        carouselRow.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-neutral-900">${item.id}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <img src="${item.image}" alt="${item.title}" class="w-16 h-12 object-cover rounded">
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-neutral-900">${item.title}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-500">${item.description}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-500">${item.buttonText}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${item.isActive ? '已启用' : '已禁用'}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+            <button class="toggle-carousel-active-btn text-blue-600 hover:text-blue-800" data-id="${item.id}" title="切换启用状态">
+              <i class="fa fa-${item.isActive ? 'eye-slash' : 'eye'}"></i>
+            </button>
+            <button class="edit-carousel-btn text-yellow-600 hover:text-yellow-800" data-id="${item.id}" title="编辑轮播">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="delete-carousel-btn text-red-600 hover:text-red-800" data-id="${item.id}" title="删除轮播">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        `;
+        carouselTableBody.appendChild(carouselRow);
+      });
+      
+      // 绑定事件
+      bindCarouselTableEvents();
+    }
+    
+    // 绑定轮播表格操作事件
+    function bindCarouselTableEvents() {
+      // 切换启用状态
+      document.querySelectorAll('.toggle-carousel-active-btn').forEach(btn => {
+        btn.addEventListener('click', toggleCarouselActive);
+      });
+      
+      // 编辑轮播
+      document.querySelectorAll('.edit-carousel-btn').forEach(btn => {
+        btn.addEventListener('click', editCarousel);
+      });
+      
+      // 删除轮播
+      document.querySelectorAll('.delete-carousel-btn').forEach(btn => {
+        btn.addEventListener('click', deleteCarousel);
+      });
+    }
+    
+    // 切换轮播启用状态
+    function toggleCarouselActive(e) {
+      const carouselId = parseInt(e.currentTarget.dataset.id);
+      const carouselItem = carouselItems.find(item => item.id === carouselId);
+      
+      if (carouselItem) {
+        carouselItem.isActive = !carouselItem.isActive;
+        saveCarouselItems();
+        renderCarouselTable();
+        showToast(`${carouselItem.title}已${carouselItem.isActive ? '启用' : '禁用'}`);
+      }
+    }
+    
+    // 编辑轮播
+    function editCarousel(e) {
+      const carouselId = parseInt(e.currentTarget.dataset.id);
+      const carouselItem = carouselItems.find(item => item.id === carouselId);
+      
+      if (carouselItem) {
+        carouselModalTitle.textContent = '编辑轮播';
+        carouselIdInput.value = carouselItem.id;
+        carouselImageInput.value = carouselItem.image;
+        carouselTitleInput.value = carouselItem.title;
+        carouselDescriptionInput.value = carouselItem.description;
+        carouselButtonTextInput.value = carouselItem.buttonText;
+        carouselIsActiveInput.checked = carouselItem.isActive;
+        carouselModal.classList.remove('hidden');
+      }
+    }
+    
+    // 删除轮播
+    function deleteCarousel(e) {
+      const carouselId = parseInt(e.currentTarget.dataset.id);
+      const carouselItem = carouselItems.find(item => item.id === carouselId);
+      
+      if (carouselItem && confirm(`确定要删除轮播"${carouselItem.title}"吗？`)) {
+        carouselItems = carouselItems.filter(item => item.id !== carouselId);
+        saveCarouselItems();
+        renderCarouselTable();
+        showToast(`${carouselItem.title}已删除`);
+      }
+    }
+    
+    // 添加新轮播
+    function addCarousel() {
+      carouselModalTitle.textContent = '添加轮播';
+      carouselForm.reset();
+      carouselIdInput.value = '';
+      carouselModal.classList.remove('hidden');
+    }
+    
+    // 初始化事件监听
+    function initEventListeners() {
+      // 标签页切换
+      productTab.addEventListener('click', () => switchTab('product'));
+      carouselTab.addEventListener('click', () => switchTab('carousel'));
+      
+      // 商品管理事件
+      // 添加商品按钮
+      addProductBtn.addEventListener('click', addProduct);
+      
+      // 关闭商品模态框
+      closeModalBtn.addEventListener('click', () => {
+        productModal.classList.add('hidden');
+      });
+      
+      cancelBtn.addEventListener('click', () => {
+        productModal.classList.add('hidden');
+      });
+      
+      // 点击商品模态框外部关闭
+      productModal.addEventListener('click', (e) => {
+        if (e.target === productModal) {
+          productModal.classList.add('hidden');
+        }
+      });
+      
+      // 商品表单提交
+      productForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(productForm);
+        const productData = {
+          name: formData.get('name'),
+          category: formData.get('category'),
+          price: parseFloat(formData.get('price')),
+          originalPrice: parseFloat(formData.get('originalPrice')),
+          image: formData.get('image'),
+          sales: parseInt(formData.get('sales')),
+          isActive: formData.get('isActive') === 'on'
+        };
+        
+        const productId = formData.get('id');
+        
+        if (productId) {
+          // 编辑现有商品
+          const index = products.findIndex(p => p.id === parseInt(productId));
+          if (index !== -1) {
+            products[index] = { ...productData, id: parseInt(productId) };
+            showToast('商品已更新');
+          }
+        } else {
+          // 添加新商品
+          const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+          products.push({ ...productData, id: newId });
+          showToast('商品已添加');
+        }
+        
+        saveProducts();
+        renderProductTable();
+        productModal.classList.add('hidden');
+      });
+      
+      // 轮播管理事件
+      // 添加轮播按钮
+      addCarouselBtn.addEventListener('click', addCarousel);
+      
+      // 关闭轮播模态框
+      closeCarouselModalBtn.addEventListener('click', () => {
+        carouselModal.classList.add('hidden');
+      });
+      
+      cancelCarouselBtn.addEventListener('click', () => {
+        carouselModal.classList.add('hidden');
+      });
+      
+      // 点击轮播模态框外部关闭
+      carouselModal.addEventListener('click', (e) => {
+        if (e.target === carouselModal) {
+          carouselModal.classList.add('hidden');
+        }
+      });
+      
+      // 轮播表单提交
+      carouselForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(carouselForm);
+        const carouselData = {
+          image: formData.get('image'),
+          title: formData.get('title'),
+          description: formData.get('description'),
+          buttonText: formData.get('buttonText'),
+          isActive: formData.get('isActive') === 'on'
+        };
+        
+        const carouselId = formData.get('id');
+        
+        if (carouselId) {
+          // 编辑现有轮播
+          const index = carouselItems.findIndex(item => item.id === parseInt(carouselId));
+          if (index !== -1) {
+            carouselItems[index] = { ...carouselData, id: parseInt(carouselId) };
+            showToast('轮播已更新');
+          }
+        } else {
+          // 添加新轮播
+          const newId = carouselItems.length > 0 ? Math.max(...carouselItems.map(item => item.id)) + 1 : 1;
+          carouselItems.push({ ...carouselData, id: newId });
+          showToast('轮播已添加');
+        }
+        
+        saveCarouselItems();
+        renderCarouselTable();
+        carouselModal.classList.add('hidden');
+      });
+      
+      // 图片库事件
+      // 打开图片库
+      openImageLibraryBtn.addEventListener('click', () => {
+        imageLibraryModal.classList.remove('hidden');
+        initImageLibrary();
+      });
+      
+      // 关闭图片库
+      closeImageLibraryBtn.addEventListener('click', () => {
+        imageLibraryModal.classList.add('hidden');
+        selectedImage = null;
+        selectImageBtn.disabled = true;
+      });
+      
+      // 点击图片库模态框外部关闭
+      imageLibraryModal.addEventListener('click', (e) => {
+        if (e.target === imageLibraryModal) {
+          imageLibraryModal.classList.add('hidden');
+          selectedImage = null;
+          selectImageBtn.disabled = true;
+        }
+      });
+      
+      // 图片上传
+      imageUploadForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const file = imageUploadInput.files[0];
+        
+        if (file) {
+          // 简单的前端模拟上传，实际项目中需要后端支持
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const imageUrl = event.target.result;
+            const newId = imageLibrary.length > 0 ? Math.max(...imageLibrary.map(img => img.id)) + 1 : 1;
+            
+            // 创建新图片对象
+            const newImage = {
+              id: newId,
+              name: file.name,
+              path: imageUrl,
+              uploadedAt: new Date().toISOString()
+            };
+            
+            // 添加到图片库
+            imageLibrary.push(newImage);
+            saveImageLibrary();
+            renderImageLibrary();
+            showToast('图片上传成功');
+            
+            // 清空上传输入
+            imageUploadInput.value = '';
+          };
+          
+          reader.readAsDataURL(file);
+        } else {
+          showToast('请选择要上传的图片');
+        }
+      });
+      
+      // 选择图片按钮
+      selectImageBtn.addEventListener('click', () => {
+        if (selectedImage) {
+          // 将选中的图片路径设置到商品图片输入框
+          productImageInput.value = selectedImage;
+          imageLibraryModal.classList.add('hidden');
+          selectedImage = null;
+          selectImageBtn.disabled = true;
+        }
+      });
+      
+      // ESC键关闭模态框
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          productModal.classList.add('hidden');
+          carouselModal.classList.add('hidden');
+          imageLibraryModal.classList.add('hidden');
+          selectedImage = null;
+          selectImageBtn.disabled = true;
+        }
+      });
+    }
+    
+    // 初始化页面
+    function init() {
+      renderProductTable();
+      renderCarouselTable();
+      initImageLibrary();
+      initEventListeners();
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
