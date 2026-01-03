@@ -437,25 +437,22 @@
       showToast('商品已从购物车移除！');
     }
     
-    // 生成订单明细
+   // 生成订单明细
     function generateOrderDetails() {
       let details = `订单明细：\n`;
       details += `==============================\n`;
       
-      let total = 0;
       cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        details += `${index + 1}. ${item.name} - ¥${item.price} x ${item.quantity} = ¥${itemTotal}\n`;
+        details += `${index + 1}. ${item.name} - 数量：${item.quantity}\n`;
       });
       
       details += `==============================\n`;
-      details += `订单总价：¥${total.toFixed(2)}\n`;
       details += `下单时间：${new Date().toLocaleString()}\n`;
       details += `订单编号：${generateOrderNumber()}`;
       
       return details;
     }
+
     
     // 生成订单编号
     function generateOrderNumber() {
@@ -582,4 +579,5 @@
     document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
+
 </html>
