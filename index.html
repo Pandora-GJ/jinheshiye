@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报单选品</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E63946', // 主色调：红色系（电商常用）
+            secondary: '#457B9D', // 辅助色：蓝色系
+            neutral: {
+              100: '#F8F9FA',
+              200: '#E9ECEF',
+              300: '#DEE2E6',
+              800: '#343A40',
+              900: '#212529'
+            }
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义样式 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .product-card {
+        @apply bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors duration-300 focus:ring-2 focus:ring-primary/50 focus:outline-none;
+      }
+      .btn-secondary {
+        @apply bg-secondary text-white py-2 px-4 rounded-md hover:bg-secondary/90 transition-colors duration-300 focus:ring-2 focus:ring-secondary/50 focus:outline-none;
+      }
+      .search-input {
+        @apply w-full py-3 px-4 rounded-l-md border border-neutral-300 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-neutral-100 text-neutral-800 min-h-screen flex flex-col">
+  <!-- 导航栏 -->
+  <header class="sticky top-0 z-50 bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
+      <!-- 商城Logo -->
+      <div class="flex items-center mb-3 md:mb-0">
+        <i class="fa fa-shopping-bag text-primary text-2xl mr-2"></i>
+        <h1 class="text-xl font-bold text-neutral-900">报单选品</h1>
+      </div>
+      
+      <!-- 搜索框 -->
+      <div class="w-full md:w-1/2 lg:w-2/5 flex">
+        <input 
+          type="text" 
+          id="search-input"
+          class="search-input" 
+          placeholder="搜索商品、品牌、分类..."
+          aria-label="搜索商品"
+        >
+        <button 
+          id="search-btn"
+          class="bg-primary text-white px-4 rounded-r-md hover:bg-primary/90 transition-colors duration-300"
+          aria-label="搜索"
+        >
+          <i class="fa fa-search"></i>
+        </button>
+      </div>
+      
+      <!-- 购物车 -->
+      <div class="ml-0 md:ml-4 mt-3 md:mt-0">
+        <button 
+          id="cart-btn"
+          class="relative btn-secondary flex items-center space-x-2"
+          aria-label="购物车"
+        >
+          <i class="fa fa-shopping-cart"></i>
+          <span>购物车</span>
+          <span id="cart-count" class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+          <span id="cart-total-amount" class="text-xs bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded-full">¥0.00</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 商品列表 -->
+    <section class="mb-8">
+      <h2 class="text-xl md:text-2xl font-bold mb-6 flex items-center">
+        <i class="fa fa-th-large text-primary mr-2"></i>
+        热门商品
+      </h2>
+      
+      <div id="product-list" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- 商品项会通过JS动态生成 -->
+      </div>
+    </section>
+  </main>
+
+  <!-- 购物车模态框 -->
+  <div id="cart-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 class="text-xl font-bold">购物车</h3>
+        <button id="close-cart" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭购物车">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <div id="cart-items" class="flex-grow overflow-y-auto p-6">
+        <!-- 空购物车状态 -->
+        <div id="empty-cart" class="py-12 text-center">
+          <i class="fa fa-shopping-cart text-5xl text-neutral-300 mb-4"></i>
+          <p class="text-neutral-500">购物车还是空的，快去选购商品吧！</p>
+        </div>
+        
+        <!-- 购物车商品列表 -->
+        <div id="cart-items-list" class="hidden space-y-4"></div>
+      </div>
+      
+      <div class="px-6 py-4 border-t flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <span class="font-bold">总计：</span>
+          <span id="cart-total" class="text-primary text-lg">¥0.00</span>
+        </div>
+        <button id="checkout-btn" class="btn-primary w-full md:w-auto" disabled>结算下单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 订单明细模态框 -->
+  <div id="order-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div class="px-6 py-4 border-b flex justify-between items-center">
+        <h3 class="text-xl font-bold">订单明细</h3>
+        <button id="close-order" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭订单明细">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="flex-grow overflow-y-auto p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="order-details">订单明细</label>
+          <textarea 
+            id="order-details" 
+            class="w-full h-48 p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none resize-none"
+            readonly
+          ></textarea>
+        </div>
+        <button id="copy-order-btn" class="btn-secondary w-full">
+          <i class="fa fa-copy mr-1"></i>
+          复制订单明细
+        </button>
+      </div>
+      
+      <div class="px-6 py-4 border-t flex justify-end">
+        <button id="confirm-order-btn" class="btn-primary">
+          确认下单
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成功提示 -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+    <i class="fa fa-check-circle mr-2"></i>
+    <span id="toast-message">操作成功！</span>
+  </div>
+
+  <footer class="bg-neutral-800 text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-lg font-bold mb-4">仅用于报单商品选择与文案复制</h3>
+        </div>
+        <div>
+
+          </ul>
+        </div>
+        <div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 pt-6 border-t border-white/10 text-center text-neutral-400 text-sm">
+        © 2026 报单选品
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 商品数据
+    const products = [
+      { id: 1, name: '舒缓按摩粉', price: 1960, originalPrice: 6999, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18740661/X1.JPG', category: '保健', sales: 1258 },
+      { id: 2, name: '舒眠按摩粉', price: 1960, originalPrice: 399, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19086727/X1.JPG', category: '保健', sales: 3421 },
+      { id: 3, name: '滋参丸', price: 980, originalPrice: 999, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26866439/X1.JPG', category: '保健', sales: 2156 },
+      { id: 4, name: '圣极益青', price: 1960, originalPrice: 1499, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/15665905/X1.JPG', category: '保健', sales: 897 },
+      { id: 5, name: '金诃铁皮石斛沙棘小分子肽', price: 490, originalPrice: 2299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/21505560/X1.JPG', category: '保健', sales: 654 },
+      { id: 6, name: '金诃亚麻籽油凝胶糖果/盒', price: 490, originalPrice: 129, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19188893/X1.JPG', category: '保健', sales: 4589 },
+      { id: 7, name: '金诃藏地金宝压片糖果/盒', price: 980, originalPrice: 599, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19188862/X1.JPG', category: '保健', sales: 2876 },
+      { id: 8, name: '金诃牌辅酶Q10胶囊/盒', price: 490, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19188870/X1.JPG', category: '保健', sales: 1890 },
+      { id: 9, name: '金诃藏药亚札贡布达玛酒2瓶/盒', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/23128389/X1.JPG', category: '保健', sales: 1890 },
+      { id: 10, name: '封穴粉', price: 490, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19168345/X1.JPG', category: '保健', sales: 1890 },
+      { id: 11, name: '【归清方】青稞余甘子混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981010/X1.JPG', category: '保健', sales: 1890 },
+      { id: 12, name: '【归津方】葛根桃仁混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981014/X1.JPG', category: '保健', sales: 1890 },
+      { id: 13, name: '【归宁方】橘红荷叶混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981013/X1.JPG', category: '保健', sales: 1890 },
+      { id: 14, name: '【归润方】玉竹百合混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981012/X1.JPG', category: '保健', sales: 1890 },
+      { id: 15, name: '【归元方】干姜肉桂混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981011/X1.JPG', category: '保健', sales: 1890 },
+      { id: 16, name: '【归本方】山药茯苓混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981015/X1.JPG', category: '保健', sales: 1890 },
+      { id: 17, name: '【归和方】佛手沙棘混合植物固体饮料', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/18981009/X1.JPG', category: '保健', sales: 1890 },
+      { id: 18, name: '金诃驰迪片', price: 245, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26727516/X1.JPG', category: '保健', sales: 1890 },
+      { id: 19, name: '金诃伽维胶囊', price: 490, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26727755/X1.JPG', category: '保健', sales: 1890 },
+      { id: 20, name: '金刺梨集萃焕颜饮', price: 245, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26727658/X1.JPG', category: '保健', sales: 1890 },
+      { id: 21, name: '金诃·藏有引力日化产品组合', price: 1960, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/upload/IntroduceImgs/20250713/6388803827127618728357567.jpg', category: '保健', sales: 1890 },
+      { id: 22, name: '入门套餐一：日化组合', price: 980, originalPrice: 299, image: 'https://www.huoerjiu.com/WebMobile/Style/image/logo.png', category: '保健', sales: 1890 },
+      { id: 23, name: '入门套餐二：维生素套组', price: 980, originalPrice: 299, image: 'https://www.huoerjiu.com/WebMobile/Style/image/logo.png', category: '保健', sales: 1890 },
+      { id: 24, name: '入门套餐三：面膜套组', price: 980, originalPrice: 299, image: 'https://www.huoerjiu.com/WebMobile/Style/image/logo.png', category: '保健', sales: 1890 },
+      { id: 25, name: '入门套餐四：五味甘露套组', price: 980, originalPrice: 299, image: 'https://www.huoerjiu.com/WebMobile/Style/image/logo.png', category: '保健', sales: 1890 },
+      { id: 26, name: '入门套餐五：卫生巾套组', price: 980, originalPrice: 299, image: 'https://www.huoerjiu.com/WebMobile/Style/image/logo.png', category: '保健', sales: 1890 },
+      { id: 27, name: '金诃·臻膳锅', price: 9800, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/25754750/X1.JPG', category: '保健', sales: 1890 },
+      { id: 28, name: '5瓶·五味甘露*40粒', price: 1960, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19441932/X1.JPG', category: '保健', sales: 1890 },
+      { id: 29, name: '白玛达娃诃子焕活御龄系列套盒', price: 2940, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26902922/X1.JPG', category: '保健', sales: 1890 },
+      { id: 30, name: '黄精牡蛎低聚肽', price: 980, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/19146547/X1.JPG', category: '保健', sales: 1890 },
+      { id: 31, name: '余甘子植萃轻酸饮', price: 245, originalPrice: 299, image: 'https://man.zsjkpt.com/JHZYNewOrg/MallProImage/26747179/X1.JPG', category: '保健', sales: 1890 },
+    ];
+
+    // 购物车数据
+    let cart = [];
+    
+    // DOM元素
+    const productListEl = document.getElementById('product-list');
+    const cartBtn = document.getElementById('cart-btn');
+    const cartCountEl = document.getElementById('cart-count');
+    const cartTotalAmountEl = document.getElementById('cart-total-amount');
+    const cartModal = document.getElementById('cart-modal');
+    const closeCartBtn = document.getElementById('close-cart');
+    const emptyCartEl = document.getElementById('empty-cart');
+    const cartItemsListEl = document.getElementById('cart-items-list');
+    const cartTotalEl = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const orderModal = document.getElementById('order-modal');
+    const closeOrderBtn = document.getElementById('close-order');
+    const orderDetailsEl = document.getElementById('order-details');
+    const copyOrderBtn = document.getElementById('copy-order-btn');
+    const confirmOrderBtn = document.getElementById('confirm-order-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    // 初始化商品列表
+    function initProductList(productsToShow = products) {
+      productListEl.innerHTML = '';
+      
+      if (productsToShow.length === 0) {
+        productListEl.innerHTML = `
+          <div class="col-span-full py-12 text-center">
+            <i class="fa fa-search text-5xl text-neutral-300 mb-4"></i>
+            <p class="text-neutral-500">未找到相关商品，请尝试其他关键词</p>
+          </div>
+        `;
+        return;
+      }
+      
+      productsToShow.forEach(product => {
+        const productEl = document.createElement('div');
+        productEl.className = 'product-card';
+        productEl.innerHTML = `
+          <div class="relative aspect-square">
+            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover">
+          </div>
+          <div class="p-4">
+            <h3 class="font-medium mb-2 line-clamp-1">${product.name}</h3>
+            <div class="flex items-center mb-3">
+              <span class="text-primary font-bold text-lg">¥${product.price}</span>
+            </div>
+            <div class="flex justify-end">
+              <button class="add-to-cart-btn btn-primary text-xs py-1 px-2" data-id="${product.id}">
+                <i class="fa fa-shopping-cart mr-1"></i>加购
+              </button>
+            </div>
+          </div>
+        `;
+        productListEl.appendChild(productEl);
+      });
+      
+      // 绑定加入购物车事件
+      document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', addToCart);
+      });
+    }
+    
+    // 加入购物车
+    function addToCart(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const product = products.find(p => p.id === productId);
+      
+      if (!product) return;
+      
+      // 检查购物车中是否已有该商品
+      const cartItem = cart.find(item => item.id === productId);
+      
+      if (cartItem) {
+        cartItem.quantity += 1;
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image
+        });
+      }
+      
+      // 更新购物车UI
+      updateCartUI();
+      
+      // 显示提示
+      showToast('商品已加入购物车！');
+    }
+    
+    // 更新购物车UI
+    function updateCartUI() {
+      // 计算总数量和总金额
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+      
+      // 更新购物车数量和总金额
+      cartCountEl.textContent = totalItems;
+      cartTotalAmountEl.textContent = `¥${totalAmount.toFixed(2)}`;
+      
+      // 更新购物车模态框
+      if (cart.length === 0) {
+        emptyCartEl.classList.remove('hidden');
+        cartItemsListEl.classList.add('hidden');
+        checkoutBtn.disabled = true;
+        cartTotalEl.textContent = '¥0.00';
+        return;
+      }
+      
+      emptyCartEl.classList.add('hidden');
+      cartItemsListEl.classList.remove('hidden');
+      checkoutBtn.disabled = false;
+      
+      // 更新购物车商品列表
+      cartItemsListEl.innerHTML = '';
+      
+      cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        
+        const cartItemEl = document.createElement('div');
+        cartItemEl.className = 'flex items-center border-b pb-4';
+        cartItemEl.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded mr-4">
+          <div class="flex-grow">
+            <h4 class="font-medium">${item.name}</h4>
+            <div class="flex justify-between items-center mt-2">
+              <span class="text-primary">¥${item.price}</span>
+              <div class="flex items-center">
+                <button class="decrease-quantity w-6 h-6 border rounded flex items-center justify-center hover:bg-neutral-100 transition-colors duration-300" data-id="${item.id}">-</button>
+                <span class="mx-2">${item.quantity}</span>
+                <button class="increase-quantity w-6 h-6 border rounded flex items-center justify-center hover:bg-neutral-100 transition-colors duration-300" data-id="${item.id}">+</button>
+              </div>
+              <span>¥${itemTotal}</span>
+              <button class="remove-item text-neutral-500 hover:text-primary transition-colors duration-300" data-id="${item.id}">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        cartItemsListEl.appendChild(cartItemEl);
+      });
+      
+      // 更新总价
+      cartTotalEl.textContent = `¥${totalAmount.toFixed(2)}`;
+      
+      // 绑定购物车操作事件
+      document.querySelectorAll('.decrease-quantity').forEach(btn => {
+        btn.addEventListener('click', decreaseQuantity);
+      });
+      
+      document.querySelectorAll('.increase-quantity').forEach(btn => {
+        btn.addEventListener('click', increaseQuantity);
+      });
+      
+      document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', removeItem);
+      });
+    }
+    
+    // 减少商品数量
+    function decreaseQuantity(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const cartItem = cart.find(item => item.id === productId);
+      
+      if (!cartItem) return;
+      
+      if (cartItem.quantity > 1) {
+        cartItem.quantity -= 1;
+      } else {
+        cart = cart.filter(item => item.id !== productId);
+      }
+      
+      updateCartUI();
+    }
+    
+    // 增加商品数量
+    function increaseQuantity(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      const cartItem = cart.find(item => item.id === productId);
+      
+      if (!cartItem) return;
+      
+      cartItem.quantity += 1;
+      updateCartUI();
+    }
+    
+    // 移除商品
+    function removeItem(e) {
+      const productId = parseInt(e.currentTarget.dataset.id);
+      cart = cart.filter(item => item.id !== productId);
+      updateCartUI();
+      showToast('商品已从购物车移除！');
+    }
+    
+    // 生成订单明细
+    function generateOrderDetails() {
+      let details = `订单明细：\n`;
+      details += `==============================\n`;
+      
+      let total = 0;
+      cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        details += `${index + 1}. ${item.name} - ¥${item.price} x ${item.quantity} = ¥${itemTotal}\n`;
+      });
+      
+      details += `==============================\n`;
+      details += `订单总价：¥${total.toFixed(2)}\n`;
+      details += `下单时间：${new Date().toLocaleString()}\n`;
+      details += `订单编号：${generateOrderNumber()}`;
+      
+      return details;
+    }
+    
+    // 生成订单编号
+    function generateOrderNumber() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      
+      return `${year}${month}${day}${random}`;
+    }
+    
+    // 显示提示框
+    function showToast(message) {
+      toastMessage.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+    
+    // 搜索功能
+    function searchProducts() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      
+      if (!keyword) {
+        initProductList(products);
+        return;
+      }
+      
+      const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(keyword) || 
+        product.category.toLowerCase().includes(keyword)
+      );
+      
+      initProductList(filteredProducts);
+    }
+    
+    // 初始化事件监听
+    function initEventListeners() {
+      // 购物车模态框
+      cartBtn.addEventListener('click', () => {
+        cartModal.classList.remove('hidden');
+        updateCartUI();
+      });
+      
+      closeCartBtn.addEventListener('click', () => {
+        cartModal.classList.add('hidden');
+      });
+      
+      // 点击模态框外部关闭
+      cartModal.addEventListener('click', (e) => {
+        if (e.target === cartModal) {
+          cartModal.classList.add('hidden');
+        }
+      });
+      
+      // 结算下单
+      checkoutBtn.addEventListener('click', () => {
+        cartModal.classList.add('hidden');
+        orderModal.classList.remove('hidden');
+        
+        // 生成并显示订单明细
+        const orderDetails = generateOrderDetails();
+        orderDetailsEl.value = orderDetails;
+      });
+      
+      // 关闭订单模态框
+      closeOrderBtn.addEventListener('click', () => {
+        orderModal.classList.add('hidden');
+      });
+      
+      // 点击模态框外部关闭
+      orderModal.addEventListener('click', (e) => {
+        if (e.target === orderModal) {
+          orderModal.classList.add('hidden');
+        }
+      });
+      
+      // 复制订单明细
+      copyOrderBtn.addEventListener('click', () => {
+        orderDetailsEl.select();
+        document.execCommand('copy');
+        showToast('订单明细已复制到剪贴板！');
+      });
+      
+      // 确认下单
+      confirmOrderBtn.addEventListener('click', () => {
+        orderModal.classList.add('hidden');
+        cart = [];
+        updateCartUI();
+        showToast('下单成功！我们将尽快处理您的订单。');
+      });
+      
+      // 搜索功能
+      searchBtn.addEventListener('click', searchProducts);
+      
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          searchProducts();
+        }
+      });
+      
+      // ESC键关闭模态框
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          cartModal.classList.add('hidden');
+          orderModal.classList.add('hidden');
+        }
+      });
+    }
+    
+    // 初始化页面
+    function init() {
+      initProductList();
+      initEventListeners();
+      updateCartUI();
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
