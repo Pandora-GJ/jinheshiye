@@ -178,7 +178,7 @@
 
   <!-- 代理直营数量弹窗 -->
   <div id="agent-popup" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-lg w-full max-w-md overflow-hidden flex flex-col animate-fadeIn">
+    <div class="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
       <div class="px-6 py-4 border-b flex justify-between items-center">
         <h3 class="text-xl font-bold">报单信息</h3>
         <button id="close-agent-popup" class="text-neutral-800 hover:text-primary transition-colors duration-300" aria-label="关闭">
@@ -187,6 +187,20 @@
       </div>
       
       <div class="flex-grow overflow-y-auto p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="paste-info">粘贴信息（自动识别）</label>
+          <textarea 
+            id="paste-info" 
+            class="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none resize-none"
+            rows="5"
+            placeholder="请粘贴包含个人信息的文本，格式如下：\n【姓名：张三\n手机号：13800138000\n身份证: 110101199001011234\n收货地址：北京市朝阳区某某街道123号】"
+          ></textarea>
+        </div>
+        <div class="mb-4">
+          <button id="parse-info-btn" class="btn-secondary w-full">
+            <i class="fa fa-magic mr-1"></i>自动识别信息
+          </button>
+        </div>
         <div class="mb-4">
           <label class="block text-sm font-medium mb-2" for="agent-count">代理数量</label>
           <input 
@@ -206,6 +220,42 @@
             min="0"
             value="0"
           >
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="customer-name">姓名</label>
+          <input 
+            type="text" 
+            id="customer-name" 
+            class="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none"
+            placeholder="请输入姓名"
+          >
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="customer-phone">手机号</label>
+          <input 
+            type="tel" 
+            id="customer-phone" 
+            class="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none"
+            placeholder="请输入手机号"
+          >
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="customer-id">身份证</label>
+          <input 
+            type="text" 
+            id="customer-id" 
+            class="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none"
+            placeholder="请输入身份证号"
+          >
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2" for="customer-address">收货地址</label>
+          <textarea 
+            id="customer-address" 
+            class="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none resize-none"
+            rows="3"
+            placeholder="请输入收货地址"
+          ></textarea>
         </div>
       </div>
       
@@ -302,6 +352,12 @@
     const closeAgentPopup = document.getElementById('close-agent-popup');
     const agentCountInput = document.getElementById('agent-count');
     const directCountInput = document.getElementById('direct-count');
+    const customerNameInput = document.getElementById('customer-name');
+    const customerPhoneInput = document.getElementById('customer-phone');
+    const customerIdInput = document.getElementById('customer-id');
+    const customerAddressInput = document.getElementById('customer-address');
+    const pasteInfoInput = document.getElementById('paste-info');
+    const parseInfoBtn = document.getElementById('parse-info-btn');
     const submitAgentInfoBtn = document.getElementById('submit-agent-info');
     const searchInput = document.getElementById('search-input');
     const searchBtn = document.getElementById('search-btn');
@@ -500,7 +556,7 @@
     }
     
     // 划分商品并生成代理直营订单明细
-    function generateOrderDetailsWithAgentDirect(agentCount, directCount) {
+    function generateOrderDetailsWithAgentDirect(agentCount, directCount, customerInfo = {}) {
       let details = `订单明细：\n`;
       details += `==============================\n\n`;
       
@@ -533,6 +589,13 @@
             orderItems.push(`${currentItem.name} ${itemsToTake}个`);
             currentAmount += currentItem.price * itemsToTake;
             currentItemQuantity -= itemsToTake;
+          } else {
+            // 如果当前商品价格过高，无法添加，移动到下一个商品
+            itemIndex++;
+            if (itemIndex < cart.length) {
+              currentItem = cart[itemIndex];
+              currentItemQuantity = currentItem.quantity;
+            }
           }
           
           if (currentItemQuantity <= 0) {
@@ -544,11 +607,11 @@
           }
         }
         
-        details += `姓名：（空）\n`;
-        details += `手机号：（空）\n`;
-        details += `身份证: （空）\n`;
+        details += `姓名：${customerInfo.name || '空'}\n`;
+        details += `手机号：${customerInfo.phone || '空'}\n`;
+        details += `身份证: ${customerInfo.id || '空'}\n`;
         details += `订货：${orderItems.join(' + ')}\n`;
-        details += `收货地址：（空）\n`;
+        details += `收货地址：${customerInfo.address || '空'}\n`;
         details += `推荐人+会员编号：（空）\n`;
         details += `接点人+会员编号：（空）\n`;
         details += `备注：代理\n\n`;
@@ -567,6 +630,13 @@
             orderItems.push(`${currentItem.name} ${itemsToTake}个`);
             currentAmount += currentItem.price * itemsToTake;
             currentItemQuantity -= itemsToTake;
+          } else {
+            // 如果当前商品价格过高，无法添加，移动到下一个商品
+            itemIndex++;
+            if (itemIndex < cart.length) {
+              currentItem = cart[itemIndex];
+              currentItemQuantity = currentItem.quantity;
+            }
           }
           
           if (currentItemQuantity <= 0) {
@@ -578,11 +648,11 @@
           }
         }
         
-        details += `姓名：（空）\n`;
-        details += `手机号：（空）\n`;
-        details += `身份证: （空）\n`;
+        details += `姓名：${customerInfo.name || '空'}\n`;
+        details += `手机号：${customerInfo.phone || '空'}\n`;
+        details += `身份证: ${customerInfo.id || '空'}\n`;
         details += `订货：${orderItems.join(' + ')}\n`;
-        details += `收货地址：（空）\n`;
+        details += `收货地址：${customerInfo.address || '空'}\n`;
         details += `推荐人+会员编号：（空）\n`;
         details += `接点人+会员编号：（空）\n`;
         details += `备注：直营\n\n`;
@@ -697,10 +767,45 @@
         }
       });
       
+      // 自动识别信息
+      parseInfoBtn.addEventListener('click', () => {
+        const pasteText = pasteInfoInput.value.trim();
+        if (!pasteText) {
+          showToast('请先粘贴包含个人信息的文本');
+          return;
+        }
+        
+        // 提取个人信息
+        const nameMatch = pasteText.match(/姓名：([^\n]+)/);
+        const phoneMatch = pasteText.match(/手机号：([^\n]+)/);
+        const idMatch = pasteText.match(/身份证[:：]\s*([^\n]+)/);
+        const addressMatch = pasteText.match(/收货地址：([^\n]+)/);
+        
+        // 填写到对应字段
+        if (nameMatch) {
+          customerNameInput.value = nameMatch[1].trim();
+        }
+        if (phoneMatch) {
+          customerPhoneInput.value = phoneMatch[1].trim();
+        }
+        if (idMatch) {
+          customerIdInput.value = idMatch[1].trim();
+        }
+        if (addressMatch) {
+          customerAddressInput.value = addressMatch[1].trim();
+        }
+        
+        showToast('信息识别成功！');
+      });
+      
       // 提交代理直营数量
       submitAgentInfoBtn.addEventListener('click', () => {
         const agentCount = parseInt(agentCountInput.value) || 0;
         const directCount = parseInt(directCountInput.value) || 0;
+        const customerName = customerNameInput.value.trim();
+        const customerPhone = customerPhoneInput.value.trim();
+        const customerId = customerIdInput.value.trim();
+        const customerAddress = customerAddressInput.value.trim();
         
         if (agentCount === 0 && directCount === 0) {
           showToast('请至少输入一个代理或直营数量');
@@ -708,7 +813,12 @@
         }
         
         // 划分商品并生成订单明细
-        const orderDetails = generateOrderDetailsWithAgentDirect(agentCount, directCount);
+        const orderDetails = generateOrderDetailsWithAgentDirect(agentCount, directCount, {
+          name: customerName,
+          phone: customerPhone,
+          id: customerId,
+          address: customerAddress
+        });
         orderDetailsEl.value = orderDetails;
         
         // 显示订单明细模态框
