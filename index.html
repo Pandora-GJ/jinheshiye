@@ -776,10 +776,10 @@
         }
         
         // 提取个人信息
-        const nameMatch = pasteText.match(/姓名：([^\n]+)/);
-        const phoneMatch = pasteText.match(/手机号：([^\n]+)/);
+        const nameMatch = pasteText.match(/姓名[:：]\s*([^\n]+)/);
+        const phoneMatch = pasteText.match(/手机号[:：]\s*([^\n]+)/);
         const idMatch = pasteText.match(/身份证[:：]\s*([^\n]+)/);
-        const addressMatch = pasteText.match(/收货地址：([^\n]+)/);
+        const addressMatch = pasteText.match(/收货地址[:：]\s*([^\n]+)/);
         
         // 填写到对应字段
         if (nameMatch) {
